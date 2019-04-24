@@ -1,3 +1,101 @@
-We can see the balance of the Splitter contract on the Web page.
-We can see the balances of Alice, Bob and Carol on the Web page.
-Alice can use the Web page to split her ether.
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Splitter Dapp</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="css/normalize.css">
+    <link rel="stylesheet" href="css/skeleton.css">
+    <link href="//fonts.googleapis.com/css?family=Roboto:400,300,600" rel="stylesheet" type="text/css">
+    <script src="js/web3.js"></script>
+    <script src="js/Splitter.js"></script>
+    <script src="js/app.js"></script>
+</head>
+<body>
+<div id="Container" class="container" style="margin: 30px auto">
+    <section id="Title">
+        <h1>Splitter</h1>
+    </section>
+    <section id="Summary">
+        <div class="twelve columns">
+            <table id="SplitterTable" class="u-full-width table-2-columns">
+                <tbody>
+                <tr>
+                    <td>Splitter address</td>
+                    <td id="SplitterAddress" style="text-align: right"></td>
+                </tr>
+                <tr>
+                    <td>Splitter balance</td>
+                    <td id="SplitterBalance" style="text-align: right"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="twelve columns">
+            <table id="Alice" class="u-full-width table-2-columns">
+                <tbody>
+                <tr>
+                    <td>Alice address</td>
+                    <td id="AliceAddress" style="text-align: right"></td>
+                </tr>
+                <tr>
+                    <td>Alice balance</td>
+                    <td id="AliceBalance" style="text-align: right"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="twelve columns">
+            <table id="Bob" class="u-full-width table-2-columns">
+                <tbody>
+                <tr>
+                    <td>Bob address</td>
+                    <td id="BobAddress" style="text-align: right"></td>
+                </tr>
+                <tr>
+                    <td>Bob balance</td>
+                    <td id="BobBalance" style="text-align: right"></td>
+                </tr>
+                <tr>
+                    <td>toWithdraw1 (Bob)</td>
+                    <td id="toWithdraw1" style="text-align: right"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="twelve columns">
+            <table id="Carol" class="u-full-width table-2-columns">
+                <tbody>
+                <tr class="row-bold">
+                    <td>Carol address</td>
+                    <td id="CarolAddress" style="text-align: right"></td>
+                </tr>
+                <tr>
+                    <td>Carol balance</td>
+                    <td id="CarolBalance" style="text-align: right"></td>
+                </tr>
+                <tr>
+                    <td>toWithdraw2 (Carol)</td>
+                    <td id="toWithdraw2" style="text-align: right"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+    <section id="Split">
+        <h2>For Alice</h2>
+        <p>Alice can use the form below to split her ether.</p>
+        <label for="SplitAmount">Ether</label><input id="SplitAmount" type="text" />
+        <button onclick="split()">Send</button>
+    </section>
+    <section id="Withdraw">
+        <h2>For Bob and Carol</h2>
+        <p>Bob and Carol can withdraw using the following button.</p>
+        <button onclick="withdraw()">Withdraw</button>
+    </section>
+    <script type="text/javascript">
+        init();
+    </script>
+</div>
+</body>
+</html>
