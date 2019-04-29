@@ -2,27 +2,17 @@ const Splitter = artifacts.require("Splitter.sol");
 Promise = require("bluebird");
 const getBalancePromise = Promise.promisify(web3.eth.getBalance);
 
-const alice = '0xf6FF4BFDDA194eCc1b8d8Ee10B1d2d762E3aE1Ba';
-const bob = '0x8e40dD200b0FAA0D6f50220Ab9A295C1773dD1ca';
-const carol = '0xc99932d93843B8FE108D7Bbb58Ececbd184A1603';
-
 contract('Main test', accounts => {
     let instance;  // contract instance
+    const alice = accounts[0];
+    const bob = accounts[1];
+    const carol = accounts[2];
     describe("Check if the setup is correct to pass the tests", function() {
-        it("We are using the right seed", function() {
-            assert.isTrue(accounts[0] === alice, "Not using the correct seed, read README/Setup.");
-        });
         it("The accounts have enough balance", function() {
-            return new Promise((resolve, reject) => {  // using real promises
-                web3.eth.getBalance(accounts[0], function (error, balance) {
-                    if (error) {
-                        reject(error);
-                    } else  {
-                        assert.isAtLeast(parseFloat(web3.utils.fromWei(balance, 'ether')), 1);
-                        resolve(balance);
-                    }
+            return web3.eth.getBalance(accounts[0])
+                .then(balance => {
+                    assert.isAtLeast(parseFloat(web3.utils.fromWei(balance, 'ether')), 1);
                 });
-            });
         });
     });
     describe("The contract is well deployed", function () {
@@ -33,19 +23,19 @@ contract('Main test', accounts => {
                     return _i.payer.call();
                 })
                 .then(addr => {
-                    assert.isTrue(addr === alice, "Deployer is not Alice");
+                    assert.strictEqual(addr, alice, "Deployer is not Alice");
                 });
         });
         it("Beneficiary1 is Bob", function () {
             return instance.beneficiary1.call()
                 .then(addr => {
-                    assert.isTrue(addr === bob, "Beneficiary1 is not Bob");
+                    assert.strictEqual(addr, bob, "Beneficiary1 is not Bob");
                 });
         });
         it("Beneficiary2 is Carol", function () {
             return instance.beneficiary2.call()
                 .then(addr => {
-                    assert.isTrue(addr === carol, "Beneficiary2 is not Carol");
+                    assert.strictEqual(addr, carol, "Beneficiary2 is not Carol");
                 });
         });
     });
@@ -77,15 +67,15 @@ contract('Main test', accounts => {
                 })
                 .then(balance => {
                     let initialBalanceBN = web3.utils.toBN(initialBalance);
-                    assert.isTrue(initialBalanceBN.add(quantityBN).toString() === balance.toString(), "Contract does not have the ether we sent.");
+                    assert.strictEqual(initialBalanceBN.add(quantityBN).toString(), balance.toString(), "Contract does not have the ether we sent.");
                     return instance.toWithdraw1.call();
                 })
                 .then(_toWithdraw1 => {
-                    assert.isTrue(toWithdraw1.add(halfQuantityBN).toString() === _toWithdraw1.toString(), "toWithdraw1 should had been increased correctly.");
+                    assert.strictEqual(toWithdraw1.add(halfQuantityBN).toString(), _toWithdraw1.toString(), "toWithdraw1 should had been increased correctly.");
                     return instance.toWithdraw2.call();
                 })
                 .then(_toWithdraw2 => {
-                    assert.isTrue(toWithdraw2.add(halfQuantityBN).toString() === _toWithdraw2.toString(), "toWithdraw2 should had been increased correctly.");
+                    assert.strictEqual(toWithdraw2.add(halfQuantityBN).toString(), _toWithdraw2.toString(), "toWithdraw2 should had been increased correctly.");
                 });
         });
         it("Bob cannot send ETH", function() {
@@ -114,15 +104,15 @@ contract('Main test', accounts => {
                 })
                 .then(balance => {
                     let initialBalanceBN = web3.utils.toBN(initialBalance);
-                    assert.isTrue(initialBalanceBN.toString() === balance.toString(), "Contract should not had get any ether.");
+                    assert.strictEqual(initialBalanceBN.toString(), balance.toString(), "Contract should not had get any ether.");
                     return instance.toWithdraw1.call();
                 })
                 .then(_toWithdraw1 => {
-                    assert.isTrue(toWithdraw1.toString() === _toWithdraw1.toString(), "toWithdraw1 should be the same.");
+                    assert.strictEqual(toWithdraw1.toString(), _toWithdraw1.toString(), "toWithdraw1 should be the same.");
                     return instance.toWithdraw2.call();
                 })
                 .then(_toWithdraw2 => {
-                    assert.isTrue(toWithdraw2.toString() === _toWithdraw2.toString(), "toWithdraw2 should be the same.");
+                    assert.strictEqual(toWithdraw2.toString(), _toWithdraw2.toString(), "toWithdraw2 should be the same.");
                 });
         });
     });
@@ -143,7 +133,7 @@ contract('Main test', accounts => {
                     return instance.toWithdraw1.call();
                 })
                 .then(_toWithdraw1 => {
-                    assert.isTrue(_toWithdraw1.toString() === "0", "toWithdraw1 should be 0.");
+                    assert.strictEqual(_toWithdraw1.toString(), "0", "toWithdraw1 should be 0.");
                 })
         });
         it("Alice cannot withdraw", function() {
