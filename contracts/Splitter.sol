@@ -38,17 +38,20 @@ contract Splitter {
     // Beneficiaries can withdraw, all at once for the sake of simplicity
     function withdraw() public {
         require(msg.sender == beneficiary1 || msg.sender == beneficiary2, "Only beneficiaries can withdraw");
+        uint _quantityToWithdraw;
         if (msg.sender == beneficiary1) {
             require(toWithdraw1 > 0, "Nothing to withdraw");
-            msg.sender.transfer(toWithdraw1);
+            _quantityToWithdraw = toWithdraw1;
+            toWithdraw1 = 0;  // Force to zero the balance before transfer to avoid re-entrance vulnerability
+            msg.sender.transfer(_quantityToWithdraw);
             emit LogEtherWithdraw1(toWithdraw1);
-            toWithdraw1 = 0;
         }
         if (msg.sender == beneficiary2) {
             require(toWithdraw2 > 0, "Nothing to withdraw");
-            msg.sender.transfer(toWithdraw2);
-            emit LogEtherWithdraw2(toWithdraw2);
+            _quantityToWithdraw = toWithdraw2;
             toWithdraw2 = 0;
+            msg.sender.transfer(_quantityToWithdraw);
+            emit LogEtherWithdraw2(toWithdraw2);
         }
     }
 }
