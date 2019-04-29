@@ -41,21 +41,21 @@ contract Splitter is Pausable {
      * Beneficiaries can withdraw, all at once for the sake of simplicity
      */
     function withdraw() public whenNotPaused {
-        require(msg.sender == beneficiary1 || msg.sender == beneficiary2, "Only beneficiaries can withdraw");
         uint _quantityToWithdraw;
         if (msg.sender == beneficiary1) {
-            require(toWithdraw1 > 0, "Nothing to withdraw");
             _quantityToWithdraw = toWithdraw1;
+            require(_quantityToWithdraw > 0, "Nothing to withdraw");
             toWithdraw1 = 0;  // Force to zero the balance before transfer to avoid re-entrance vulnerability
+            emit LogEtherWithdraw1(_quantityToWithdraw);
             msg.sender.transfer(_quantityToWithdraw);
-            emit LogEtherWithdraw1(toWithdraw1);
-        }
-        if (msg.sender == beneficiary2) {
-            require(toWithdraw2 > 0, "Nothing to withdraw");
+        } else if (msg.sender == beneficiary2) {
             _quantityToWithdraw = toWithdraw2;
+            require(_quantityToWithdraw > 0, "Nothing to withdraw");
             toWithdraw2 = 0;
+            emit LogEtherWithdraw2(_quantityToWithdraw);
             msg.sender.transfer(_quantityToWithdraw);
-            emit LogEtherWithdraw2(toWithdraw2);
+        } else {
+            revert("Only beneficiaries can withdraw");
         }
     }
 }
