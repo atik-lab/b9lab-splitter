@@ -20,8 +20,6 @@ contract Splitter {
         // beneficiaries
         beneficiary1 = _beneficiary1;
         beneficiary2 = _beneficiary2;
-        // start with 0
-        toWithdraw1 = toWithdraw2 = 0;
     }
 
     // Alice sends ether to the contract with pay(), for it to be split,
