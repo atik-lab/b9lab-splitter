@@ -13,8 +13,8 @@ contract Splitter {
 
     constructor(address _beneficiary1, address _beneficiary2) public {
         require(_beneficiary1 != _beneficiary2);
-        require(_beneficiary1 != 0);  // Check malformed addresses
-        require(_beneficiary2 != 0);
+        require(_beneficiary1 != address(0));  // Check malformed addresses
+        require(_beneficiary2 != address(0));
         // I decided that is the creator of the contract who is the payer (it looks convenient)
         payer = msg.sender;
         // beneficiaries
