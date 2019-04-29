@@ -4,3 +4,4 @@
 
 # truffle
 build/
+node_modules/
