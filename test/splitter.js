@@ -3,9 +3,7 @@ Promise = require("bluebird");
 const getBalancePromise = Promise.promisify(web3.eth.getBalance);
 
 contract('Main test', accounts => {
-    const alice = accounts[0];
-    const bob = accounts[1];
-    const carol = accounts[2];
+    const [ alice, bob, carol ] = accounts;
     describe("Check if the setup is correct to pass the tests", function() {
         it("The accounts have enough balance", function() {
             return web3.eth.getBalance(alice)
@@ -18,9 +16,7 @@ contract('Main test', accounts => {
         let instance;
         beforeEach("Deploy and prepare", function() {
             return Splitter.new(bob, carol, {from: alice})
-                .then(_i => {
-                    instance = _i;
-                });
+                .then(_i => instance = _i);
         });
         it("Deployer is payer and is Alice", function() {
             return instance.isOwner.call()
@@ -45,9 +41,7 @@ contract('Main test', accounts => {
         let instance;
         beforeEach("Deploy and prepare", function() {
             return Splitter.new(bob, carol, {from: alice})
-                .then(_i => {
-                    instance = _i;
-                });
+                .then(_i => instance = _i);
         });
         it("Alice can send ETH", function() {
             let initialBalance = null;
@@ -146,9 +140,7 @@ contract('Main test', accounts => {
         let instance;
         beforeEach("Deploy and prepare", function() {
             return Splitter.new(bob, carol, {from: alice})
-                .then(_i => {
-                    instance = _i;
-                });
+                .then(_i => instance = _i);
         });
         it("Bob can withdraw", function() {
             let initialBalance = null;

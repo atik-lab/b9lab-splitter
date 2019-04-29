@@ -7,8 +7,8 @@ import "contracts/Owned.sol";
  * @dev Base contract which allows children to implement an emergency stop mechanism.
  */
 contract Pausable is Ownable {
-    event Paused();
-    event Unpaused();
+    event Paused(address account);
+    event Unpaused(address account);
 
     bool private _paused;
 
@@ -21,6 +21,13 @@ contract Pausable is Ownable {
      */
     function paused() public view returns (bool) {
         return _paused;
+    }
+
+    /**
+     * @return true if it's paused.
+     */
+    function isPaused() public view returns (bool) {
+        return _paused == true;
     }
 
     /**
@@ -44,7 +51,7 @@ contract Pausable is Ownable {
      */
     function pause() public onlyOwner whenNotPaused {
         _paused = true;
-        emit Paused();
+        emit Paused(msg.sender);
     }
 
     /**
@@ -52,6 +59,6 @@ contract Pausable is Ownable {
      */
     function unpause() public onlyOwner whenPaused {
         _paused = false;
-        emit Unpaused();
+        emit Unpaused(msg.sender);
     }
 }
