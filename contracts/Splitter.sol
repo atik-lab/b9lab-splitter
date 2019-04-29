@@ -26,7 +26,7 @@ contract Splitter {
     // half of it goes to Bob and the other half to Carol.
     function pay() external payable {
         require(msg.sender == payer, "Only payer can execute this function");
-        require(msg.value > 0, "This function asks for some value to be sent.");
+        require(msg.value%2 == 0, "It's not allowed to send an odd value.");
         uint _addedAmount = msg.value/uint(2);
         toWithdraw1 += _addedAmount;
         toWithdraw2 += _addedAmount;
