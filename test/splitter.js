@@ -124,6 +124,23 @@ contract('Main test', accounts => {
                     assert.strictEqual(toWithdraw2.toString(), _toWithdraw2.toString(), "toWithdraw2 should be the same.");
                 });
         });
+        it("Cannot send ETH while paused", function () {
+            let quantity = web3.utils.toWei('0.1', 'ether');
+            return instance.pause({from: alice})
+                .then(txObj => {
+                    return instance.pay({from: alice, value: quantity})
+                })
+                .catch(error => {
+                    assert(error, "Expected an error as the contract is paused.");
+                })
+                .then(txObj => {
+                    return instance.unpause({from: alice})
+                })
+                .then(txObj => {
+                    assert.strictEqual(txObj.logs.length, 1, "Only one event is expected");
+                    return instance.pay({from: alice, value: quantity})
+                });
+        });
     });
     describe("Withdrawing ETH from the contract", function () {
         let instance;
