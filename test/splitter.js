@@ -23,9 +23,9 @@ contract('Main test', accounts => {
                 });
         });
         it("Deployer is payer and is Alice", function() {
-            return instance.payer.call()
-                .then(addr => {
-                    assert.strictEqual(addr, alice, "Deployer is not Alice");
+            return instance.isOwner.call()
+                .then(isOwner => {
+                    assert.isTrue(isOwner, "Deployer is not Alice");
                 });
         });
         it("Beneficiary1 is Bob", function () {
