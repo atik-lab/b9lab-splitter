@@ -135,21 +135,29 @@ contract('Main test', accounts => {
         });
         it("Bob can withdraw", function() {
             let initialBalance = null;
+            let transactionCost = null;
+            let gasPrice = 2;
             let quantity = web3.utils.toWei('0.1', 'ether');
+            let halfQuantity = web3.utils.toWei('0.05', 'ether');
+            let halfQuantityBN = web3.utils.toBN(halfQuantity);
             return instance.pay({from: alice, value: quantity})
                 .then(txObj => {
                     return getBalancePromise(bob)
                 })
                 .then(balance => {
                     initialBalance = balance;
-                    return instance.withdraw({from: bob});
+                    return instance.withdraw({from: bob, gasPrice: gasPrice});
                 })
                 .then(txObj => {
+                    transactionCost = txObj.receipt.gasUsed*gasPrice;
                     assert.strictEqual(txObj.logs.length, 1, "Only one event is expected");
                     return getBalancePromise(bob);
                 })
                 .then(balance => {
-                    assert.isTrue(balance > initialBalance);
+                    let _initialBalanceBN = web3.utils.toBN(initialBalance);
+                    let _balanceBN = web3.utils.toBN(balance);
+                    let _transactionCostBN = web3.utils.toBN(transactionCost);
+                    assert.strictEqual(_initialBalanceBN.sub(_transactionCostBN).add(halfQuantityBN).toString(), _balanceBN.toString());
                     return instance.toWithdraw1.call();
                 })
                 .then(_toWithdraw1 => {
