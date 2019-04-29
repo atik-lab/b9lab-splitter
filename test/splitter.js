@@ -69,7 +69,7 @@ contract('Main test', accounts => {
                 })
                 .then(_toWithdraw2 => {
                     toWithdraw2 = _toWithdraw2;
-                    return instance.send(quantity, {from: alice});
+                    return instance.pay({from: alice, value: quantity});
                 })
                 .then(txObj => {
                     assert.strictEqual(txObj.logs.length, 1, "Only one event is expected");
@@ -104,7 +104,7 @@ contract('Main test', accounts => {
                 })
                 .then(_toWithdraw2 => {
                     toWithdraw2 = _toWithdraw2;
-                    return instance.send(quantity, {from: bob});
+                    return instance.pay({from: bob, value: quantity});
                 })
                 .catch(error => {
                     assert(error, "Expected an error when sending ether to the contract.");

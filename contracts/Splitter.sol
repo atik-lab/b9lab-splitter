@@ -24,9 +24,9 @@ contract Splitter {
         toWithdraw1 = toWithdraw2 = 0;
     }
 
-    // Whenever Alice sends ether to the contract for it to be split,
+    // Alice sends ether to the contract with pay(), for it to be split,
     // half of it goes to Bob and the other half to Carol.
-    function() external payable {
+    function pay() external payable {
         require(msg.sender == payer);
         uint _addedAmount = msg.value/uint(2);
         toWithdraw1 += _addedAmount;
