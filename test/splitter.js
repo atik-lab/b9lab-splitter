@@ -3,25 +3,27 @@ Promise = require("bluebird");
 const getBalancePromise = Promise.promisify(web3.eth.getBalance);
 
 contract('Main test', accounts => {
-    let instance;  // contract instance
     const alice = accounts[0];
     const bob = accounts[1];
     const carol = accounts[2];
     describe("Check if the setup is correct to pass the tests", function() {
         it("The accounts have enough balance", function() {
-            return web3.eth.getBalance(accounts[0])
+            return web3.eth.getBalance(alice)
                 .then(balance => {
                     assert.isAtLeast(parseFloat(web3.utils.fromWei(balance, 'ether')), 1);
                 });
         });
     });
     describe("The contract is well deployed", function () {
-        it("Deployer is payer and is Alice", function() {
-            return Splitter.deployed()
+        let instance;
+        beforeEach("Deploy and prepare", function() {
+            return Splitter.new(bob, carol, {from: alice})
                 .then(_i => {
                     instance = _i;
-                    return _i.payer.call();
-                })
+                });
+        });
+        it("Deployer is payer and is Alice", function() {
+            return instance.payer.call()
                 .then(addr => {
                     assert.strictEqual(addr, alice, "Deployer is not Alice");
                 });
@@ -40,6 +42,13 @@ contract('Main test', accounts => {
         });
     });
     describe("Sending ETH to the contract", function () {
+        let instance;
+        beforeEach("Deploy and prepare", function() {
+            return Splitter.new(bob, carol, {from: alice})
+                .then(_i => {
+                    instance = _i;
+                });
+        });
         it("Alice can send ETH", function() {
             let initialBalance = null;
             let toWithdraw1 = null;
@@ -48,7 +57,7 @@ contract('Main test', accounts => {
             let quantityBN = web3.utils.toBN(quantity);
             let halfQuantity = web3.utils.toWei('0.05', 'ether');
             let halfQuantityBN = web3.utils.toBN(halfQuantity);
-            return getBalancePromise(Splitter.address)  // using bluebird promises, much more convenient
+            return getBalancePromise(instance.address)
                 .then(balance => {
                     initialBalance = balance;
                     return instance.toWithdraw1.call();
@@ -63,7 +72,7 @@ contract('Main test', accounts => {
                 })
                 .then(txObj => {
                     assert.strictEqual(txObj.logs.length, 1, "Only one event is expected");
-                    return getBalancePromise(Splitter.address)
+                    return getBalancePromise(instance.address)
                 })
                 .then(balance => {
                     let initialBalanceBN = web3.utils.toBN(initialBalance);
@@ -117,9 +126,20 @@ contract('Main test', accounts => {
         });
     });
     describe("Withdrawing ETH from the contract", function () {
+        let instance;
+        beforeEach("Deploy and prepare", function() {
+            return Splitter.new(bob, carol, {from: alice})
+                .then(_i => {
+                    instance = _i;
+                });
+        });
         it("Bob can withdraw", function() {
             let initialBalance = null;
-            return getBalancePromise(bob)
+            let quantity = web3.utils.toWei('0.1', 'ether');
+            return instance.pay({from: alice, value: quantity})
+                .then(txObj => {
+                    return getBalancePromise(bob)
+                })
                 .then(balance => {
                     initialBalance = balance;
                     return instance.withdraw({from: bob});
