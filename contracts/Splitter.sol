@@ -1,7 +1,7 @@
 pragma solidity >=0.4.21 <0.6.0;
 
 contract Splitter {
-    address public splitter;
+    address public payer;
     address public beneficiary1;
     address public beneficiary2;
     uint public toWithdraw1; // amount available to withdraw for beneficiary 1
@@ -13,8 +13,8 @@ contract Splitter {
 
     constructor(address _beneficiary1, address _beneficiary2) public {
         require(_beneficiary1 != _beneficiary2);
-        // I decided that is the creator of the contract who is the splitter (it looks convenient)
-        splitter = msg.sender;
+        // I decided that is the creator of the contract who is the payer (it looks convenient)
+        payer = msg.sender;
         // beneficiaries
         beneficiary1 = _beneficiary1;
         beneficiary2 = _beneficiary2;
@@ -25,7 +25,7 @@ contract Splitter {
     // Whenever Alice sends ether to the contract for it to be split,
     // half of it goes to Bob and the other half to Carol.
     function() external payable {
-        require(msg.sender == splitter);
+        require(msg.sender == payer);
         uint _addedAmount = msg.value/uint(2);
         toWithdraw1 += _addedAmount;
         toWithdraw2 += _addedAmount;

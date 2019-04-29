@@ -26,11 +26,11 @@ contract('Main test', accounts => {
         });
     });
     describe("The contract is well deployed", function () {
-        it("Deployer is splitter and is Alice", function() {
+        it("Deployer is payer and is Alice", function() {
             return Splitter.deployed()
                 .then(_i => {
                     instance = _i;
-                    return _i.splitter.call();
+                    return _i.payer.call();
                 })
                 .then(addr => {
                     assert.isTrue(addr === alice, "Deployer is not Alice");

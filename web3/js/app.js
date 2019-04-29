@@ -20,7 +20,7 @@ function init()
 {
     // Charge addresses to the pertaining variables and show them to the user
     document.getElementById("SplitterAddress").innerText = splitterAddress;
-    splitterInstance.splitter.call(function (error, result) {
+    splitterInstance.payer.call(function (error, result) {
         if (error) {
             console.log(error);
         } else {
