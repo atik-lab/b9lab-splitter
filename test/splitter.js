@@ -140,29 +140,33 @@ contract('Main test', accounts => {
         });
         it("Bob can withdraw", function() {
             let initialBalance = null;
-            let transactionCost = null;
-            let gasPrice = 2;
+            let transactionCostBN = null;
             let quantity = web3.utils.toWei('0.1', 'ether');
             let halfQuantity = web3.utils.toWei('0.05', 'ether');
             let halfQuantityBN = web3.utils.toBN(halfQuantity);
+            let gasUsed = null;
             return instance.pay({from: alice, value: quantity})
                 .then(txObj => {
                     return web3.eth.getBalance(bob)
                 })
                 .then(balance => {
                     initialBalance = balance;
-                    return instance.withdraw({from: bob, gasPrice: gasPrice});
+                    return instance.withdraw({from: bob});
                 })
                 .then(txObj => {
-                    transactionCost = txObj.receipt.gasUsed*gasPrice;
+                    gasUsed = web3.utils.toBN(txObj.receipt.gasUsed);
                     assert.strictEqual(txObj.logs.length, 1, "Only one event is expected");
+                    return web3.eth.getTransaction(txObj.tx);
+                })
+                .then(txObj => {
+                    gasPrice = web3.utils.toBN(txObj.gasPrice);
+                    transactionCostBN = gasPrice.mul(gasUsed);
                     return web3.eth.getBalance(bob);
                 })
                 .then(balance => {
                     let _initialBalanceBN = web3.utils.toBN(initialBalance);
                     let _balanceBN = web3.utils.toBN(balance);
-                    let _transactionCostBN = web3.utils.toBN(transactionCost);
-                    assert.strictEqual(_initialBalanceBN.sub(_transactionCostBN).add(halfQuantityBN).toString(), _balanceBN.toString());
+                    assert.strictEqual(_initialBalanceBN.sub(transactionCostBN).add(halfQuantityBN).toString(), _balanceBN.toString());
                     return instance.toWithdraw1.call();
                 })
                 .then(_toWithdraw1 => {
