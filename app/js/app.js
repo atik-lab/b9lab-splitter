@@ -1,3 +1,9 @@
+require("file-loader?name=./Splitter.js!./Splitter.js");
+require("file-loader?name=./web3.js!./web3.js");
+require("file-loader?name=../index.html!../index.html");
+require("file-loader?name=../css/normalize.css!../css/normalize.css");
+require("file-loader?name=../css/skeleton.css!../css/skeleton.css");
+
 // Prepare splitter instance
 const splitterAddress = '0xA1ea75f21bb28B23d686d36A7231A6c8EE1D9F49';
 const splitterContractFactory = web3.eth.contract(JSON.parse(Splitter.contracts["Splitter.sol:Splitter"].abi));
