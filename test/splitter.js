@@ -1,6 +1,5 @@
 const Splitter = artifacts.require("Splitter.sol");
 Promise = require("bluebird");
-const getBalancePromise = Promise.promisify(web3.eth.getBalance);
 
 contract('Main test', accounts => {
     const [ alice, bob, carol ] = accounts;
@@ -39,19 +38,21 @@ contract('Main test', accounts => {
     });
     describe("Sending ETH to the contract", function () {
         let instance;
+        let initialBalance, toWithdraw1, toWithdraw2;
+        let quantity, quantityBN, halfQuantity, halfQuantityBN;
         beforeEach("Deploy and prepare", function() {
+            initialBalance = null;
+            toWithdraw1 = null;
+            toWithdraw2 = null;
+            quantity = web3.utils.toWei('0.1', 'ether');
+            quantityBN = web3.utils.toBN(quantity);
+            halfQuantity = web3.utils.toWei('0.05', 'ether');
+            halfQuantityBN = web3.utils.toBN(halfQuantity);
             return Splitter.new(bob, carol, {from: alice})
                 .then(_i => instance = _i);
         });
         it("Alice can send ETH", function() {
-            let initialBalance = null;
-            let toWithdraw1 = null;
-            let toWithdraw2 = null;
-            let quantity = web3.utils.toWei('0.1', 'ether');
-            let quantityBN = web3.utils.toBN(quantity);
-            let halfQuantity = web3.utils.toWei('0.05', 'ether');
-            let halfQuantityBN = web3.utils.toBN(halfQuantity);
-            return getBalancePromise(instance.address)
+            return web3.eth.getBalance(instance.address)
                 .then(balance => {
                     initialBalance = balance;
                     return instance.toWithdraw1.call();
@@ -66,7 +67,7 @@ contract('Main test', accounts => {
                 })
                 .then(txObj => {
                     assert.strictEqual(txObj.logs.length, 1, "Only one event is expected");
-                    return getBalancePromise(instance.address)
+                    return web3.eth.getBalance(instance.address)
                 })
                 .then(balance => {
                     let initialBalanceBN = web3.utils.toBN(initialBalance);
@@ -82,11 +83,7 @@ contract('Main test', accounts => {
                 });
         });
         it("Bob cannot send ETH", function() {
-            let initialBalance = null;
-            let toWithdraw1 = null;
-            let toWithdraw2 = null;
-            let quantity = web3.utils.toWei('0.1', 'ether');
-            return getBalancePromise(Splitter.address)
+            return web3.eth.getBalance(Splitter.address)
                 .then(balance => {
                     initialBalance = balance;
                     return instance.toWithdraw1.call();
@@ -103,7 +100,7 @@ contract('Main test', accounts => {
                     assert(error, "Expected an error when sending ether to the contract.");
                 })
                 .then(txObj => {
-                    return getBalancePromise(Splitter.address)
+                    return web3.eth.getBalance(Splitter.address)
                 })
                 .then(balance => {
                     let initialBalanceBN = web3.utils.toBN(initialBalance);
@@ -119,7 +116,6 @@ contract('Main test', accounts => {
                 });
         });
         it("Cannot send ETH while paused", function () {
-            let quantity = web3.utils.toWei('0.1', 'ether');
             return instance.pause({from: alice})
                 .then(txObj => {
                     return instance.pay({from: alice, value: quantity})
@@ -151,7 +147,7 @@ contract('Main test', accounts => {
             let halfQuantityBN = web3.utils.toBN(halfQuantity);
             return instance.pay({from: alice, value: quantity})
                 .then(txObj => {
-                    return getBalancePromise(bob)
+                    return web3.eth.getBalance(bob)
                 })
                 .then(balance => {
                     initialBalance = balance;
@@ -160,7 +156,7 @@ contract('Main test', accounts => {
                 .then(txObj => {
                     transactionCost = txObj.receipt.gasUsed*gasPrice;
                     assert.strictEqual(txObj.logs.length, 1, "Only one event is expected");
-                    return getBalancePromise(bob);
+                    return web3.eth.getBalance(bob);
                 })
                 .then(balance => {
                     let _initialBalanceBN = web3.utils.toBN(initialBalance);
