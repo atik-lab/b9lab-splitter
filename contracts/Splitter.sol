@@ -1,8 +1,10 @@
 pragma solidity >=0.4.21 <0.6.0;
 
-import "contracts/Pausable.sol";
+import "./Pausable.sol";
+import "./SafeMath.sol";
 
 contract Splitter is Pausable {
+    using SafeMath for uint;
     address public beneficiary1;
     address public beneficiary2;
     uint public toWithdraw1; // amount available to withdraw for beneficiary 1
@@ -32,8 +34,8 @@ contract Splitter is Pausable {
     function pay() external payable whenNotPaused onlyOwner {
         require(msg.value%2 == 0, "It's not allowed to send an odd value.");
         uint _addedAmount = msg.value/uint(2);
-        toWithdraw1 += _addedAmount;
-        toWithdraw2 += _addedAmount;
+        toWithdraw1 = toWithdraw1.add(_addedAmount);
+        toWithdraw2 = toWithdraw2.add(_addedAmount);
         emit LogEtherAdded(msg.value);
     }
 
