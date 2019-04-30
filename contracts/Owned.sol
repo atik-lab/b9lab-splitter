@@ -22,7 +22,7 @@ contract Ownable {
     /**
      * @return the address of the owner.
      */
-    function getOwner() public view returns (address) {
+    function owner() public view returns (address) {
         return _owner;
     }
 

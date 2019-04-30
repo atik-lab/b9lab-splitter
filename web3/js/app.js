@@ -1,11 +1,3 @@
-if (typeof web3 !== 'undefined') {
-    // Don't lose an existing provider, like Mist or Metamask
-    web3 = new Web3(web3.currentProvider);
-} else {
-    // set the provider you want from Web3.providers
-    web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
-}
-
 // Prepare splitter instance
 const splitterAddress = '0xA1ea75f21bb28B23d686d36A7231A6c8EE1D9F49';
 const splitterContractFactory = web3.eth.contract(JSON.parse(Splitter.contracts["Splitter.sol:Splitter"].abi));
@@ -16,11 +8,22 @@ let aliceAddress = null;
 let bobAddress = null;
 let carolAddress = null;
 
+window.onload = function () {
+    if (typeof web3 !== 'undefined') {
+        // Don't lose an existing provider, like Mist or Metamask
+        web3 = new Web3(web3.currentProvider);
+    } else {
+        // set the provider you want from Web3.providers
+        web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+    }
+    init();
+};
+
 function init()
 {
     // Charge addresses to the pertaining variables and show them to the user
     document.getElementById("SplitterAddress").innerText = splitterAddress;
-    splitterInstance.payer.call(function (error, result) {
+    splitterInstance.owner.call(function (error, result) {
         if (error) {
             console.log(error);
         } else {
