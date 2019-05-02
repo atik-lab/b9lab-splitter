@@ -4,11 +4,8 @@ Promise = require("bluebird");
 contract('Main test', accounts => {
     const [ alice, bob, carol ] = accounts;
     describe("Check if the setup is correct to pass the tests", function() {
-        it("The accounts have enough balance", function() {
-            return web3.eth.getBalance(alice)
-                .then(balance => {
-                    assert.isAtLeast(parseFloat(web3.utils.fromWei(balance, 'ether')), 1);
-                });
+        it("The accounts have enough balance", async function() {
+            assert.isAtLeast(parseFloat(web3.utils.fromWei(await web3.eth.getBalance(alice), 'ether')), 1);
         });
     });
     describe("The contract is well deployed", function () {
