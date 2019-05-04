@@ -5,38 +5,33 @@ import "./SafeMath.sol";
 
 contract Splitter is Pausable {
     using SafeMath for uint;
-    address public beneficiary1;
-    address public beneficiary2;
-    uint public toWithdraw1; // amount available to withdraw for beneficiary 1
-    uint public toWithdraw2; // amount available to withdraw for beneficiary 2
 
-    event LogEtherAdded(uint amount);
-    event LogEtherWithdraw1(uint amount);
-    event LogEtherWithdraw2(uint amount);
+    mapping(address => uint) public beneficiaries;
+
+    event LogEtherPaid(address indexed beneficiary1, address indexed beneficiary2, uint amount);
+    event LogEtherWithdraw(address indexed beneficiary, uint amount);
 
     /**
-     * Alice constructs the contract with both of the beneficiaries.
-     * Alice will be the owner of the contract and the payer, and if ownership is transferred then
-     * the new owner will be the new payer.
+     * Avoid sending money directly to the contract
      */
-    constructor(address _beneficiary1, address _beneficiary2) public {
-        require(_beneficiary1 != _beneficiary2, "Beneficiaries must be different");
-        require(_beneficiary1 != address(0), "Beneficiary1 address is malformed");
-        require(_beneficiary2 != address(0), "Beneficiary2 address is malformed");
-        beneficiary1 = _beneficiary1;
-        beneficiary2 = _beneficiary2;
+    function() external payable {
+        revert("Use split() to send money.");
     }
 
     /**
      * Alice sends ether to the contract with pay(), for it to be split,
      * half of it goes to Bob and the other half to Carol.
      */
-    function pay() external payable whenNotPaused onlyOwner {
+    function split(address _beneficiary1, address _beneficiary2) external payable whenNotPaused {
         require(msg.value%2 == 0, "It's not allowed to send an odd value.");
+        require(_beneficiary1 != _beneficiary2, "Beneficiaries must be different");
+        require(_beneficiary1 != address(0), "Beneficiary1 address is malformed");
+        require(_beneficiary2 != address(0), "Beneficiary2 address is malformed");
+        require(msg.value > 0, "You must send something to split");
         uint _addedAmount = msg.value/uint(2);
-        toWithdraw1 = toWithdraw1.add(_addedAmount);
-        toWithdraw2 = toWithdraw2.add(_addedAmount);
-        emit LogEtherAdded(msg.value);
+        emit LogEtherPaid(_beneficiary1, _beneficiary2, msg.value);
+        beneficiaries[_beneficiary1] = beneficiaries[_beneficiary1].add(_addedAmount);
+        beneficiaries[_beneficiary2] = beneficiaries[_beneficiary2].add(_addedAmount);
     }
 
     /**
@@ -44,20 +39,18 @@ contract Splitter is Pausable {
      */
     function withdraw() public whenNotPaused {
         uint _quantityToWithdraw;
-        if (msg.sender == beneficiary1) {
-            _quantityToWithdraw = toWithdraw1;
-            require(_quantityToWithdraw > 0, "Nothing to withdraw");
-            toWithdraw1 = 0;  // Force to zero the balance before transfer to avoid re-entrance vulnerability
-            emit LogEtherWithdraw1(_quantityToWithdraw);
-            msg.sender.transfer(_quantityToWithdraw);
-        } else if (msg.sender == beneficiary2) {
-            _quantityToWithdraw = toWithdraw2;
-            require(_quantityToWithdraw > 0, "Nothing to withdraw");
-            toWithdraw2 = 0;
-            emit LogEtherWithdraw2(_quantityToWithdraw);
-            msg.sender.transfer(_quantityToWithdraw);
-        } else {
-            revert("Only beneficiaries can withdraw");
-        }
+        uint _toWithdraw = beneficiaries[msg.sender];
+        require(_toWithdraw > 0, "Nothing to withdraw");
+        emit LogEtherWithdraw(msg.sender, _quantityToWithdraw);
+        // delete beneficiaries[msg.sender];
+        beneficiaries[msg.sender] = 0;
+        msg.sender.transfer(_toWithdraw);
+    }
+
+    /**
+     * Public function to know how much there is to withdraw for requester.
+     */
+    function getMyBalance() public view returns(uint) {
+        return beneficiaries[msg.sender];
     }
 }
