@@ -7,6 +7,7 @@ contract Splitter is Pausable {
     using SafeMath for uint;
 
     mapping(address => uint) public beneficiaries;
+    address[] public addressLookup;
 
     event LogEtherPaid(address indexed beneficiary1, address indexed beneficiary2, uint amount);
     event LogEtherWithdraw(address indexed beneficiary, uint amount);
@@ -32,6 +33,8 @@ contract Splitter is Pausable {
         emit LogEtherPaid(_beneficiary1, _beneficiary2, msg.value);
         beneficiaries[_beneficiary1] = beneficiaries[_beneficiary1].add(_addedAmount);
         beneficiaries[_beneficiary2] = beneficiaries[_beneficiary2].add(_addedAmount);
+        addressLookup.push(_beneficiary1);
+        addressLookup.push(_beneficiary2);
     }
 
     /**
@@ -42,7 +45,6 @@ contract Splitter is Pausable {
         uint _toWithdraw = beneficiaries[msg.sender];
         require(_toWithdraw > 0, "Nothing to withdraw");
         emit LogEtherWithdraw(msg.sender, _quantityToWithdraw);
-        // delete beneficiaries[msg.sender];
         beneficiaries[msg.sender] = 0;
         msg.sender.transfer(_toWithdraw);
     }
@@ -52,5 +54,12 @@ contract Splitter is Pausable {
      */
     function getMyBalance() public view returns(uint) {
         return beneficiaries[msg.sender];
+    }
+
+    /**
+     * Returns the number of accounts that have/had money to withdraw.
+     */
+    function getAddressLookupCount() public view returns(uint) {
+        return addressLookup.length;
     }
 }

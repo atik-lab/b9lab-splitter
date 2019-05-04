@@ -9,10 +9,11 @@ const splitterJson = require("../../build/contracts/Splitter.json");
 const splitterContractFactory = web3.eth.contract(splitterJson.abi);
 const splitterInstance = splitterContractFactory.at(splitterAddress);
 
-window.onload = function () {
+window.onload = async function () {
     if (typeof web3 !== 'undefined') {
         // Don't lose an existing provider, like Mist or Metamask
         web3 = new Web3(web3.currentProvider);
+        await ethereum.enable(); // Introduced in last versions of Metamask.
     } else {
         // set the provider you want from Web3.providers
         web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
@@ -22,15 +23,12 @@ window.onload = function () {
 
 module.exports = {
     init: function () {
-
-        // update my balance and balance table every 5 seconds
-        /*
+        // update my balance and balance table every second
         setInterval(function() {
             splitter.updateContractBalance();
             splitter.updateMyBalance();
             splitter.updateBalanceTable();
         }, 5000);
-        */
         splitter.updateContractBalance();
         splitter.updateMyBalance();
         splitter.updateBalanceTable();
@@ -60,17 +58,29 @@ module.exports = {
     },
     // Show to the user his balance available to withdraw
     updateBalanceTable: function () {
-        /*
-        splitterInstance.beneficiaries.call("0xA1ea75f21bb28B23d686d36A7231A6c8EE1D9F49", function (error, result) {
+        document.getElementById("BalanceTableBody").innerHTML = '';
+        splitterInstance.getAddressLookupCount.call(function (error, addressCount) {
             if (error) {
                 console.log(error);
-                console.log(error);
             } else {
-                result = '<tr><td>' + splitterAddress + '</td><td>' + web3.fromWei(result.toString()) + '</td></tr>';
-                document.getElementById("BalanceTableBody").innerHTML = result;
+                for (let i = 0; i < addressCount; i++) {
+                    splitterInstance.addressLookup.call(i, function (error, address) {
+                        if (error) {
+                            console.log(error);
+                        } else {
+                            splitterInstance.beneficiaries.call(address, function (error, result) {
+                                if (error) {
+                                    console.log(error);
+                                } else {
+                                    result = '<tr><td>' + address + '</td><td>' + web3.fromWei(result.toString()) + '</td></tr>';
+                                    document.getElementById("BalanceTableBody").innerHTML += result;
+                                }
+                            });
+                        }
+                    });
+                }
             }
         });
-        */
     },
     split: function () {
         let amount = document.getElementById("SplitAmount").value;
