@@ -6,30 +6,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="css/normalize.css">
     <link rel="stylesheet" href="css/skeleton.css">
+    <link rel="stylesheet" href="css/style.css">
     <link href="//fonts.googleapis.com/css?family=Roboto:400,300,600" rel="stylesheet" type="text/css">
     <script src="js/app.js"></script>
-    <script src="js/web3.js"></script>
 </head>
 <body>
+<div id="MessageBox" class="message-box"></div>
 <div id="Container" class="container" style="margin: 30px auto">
     <section id="Title">
         <h1>Splitter</h1>
     </section>
-    <section id="actions">
+    <section id="Actions">
         <div class="row">
             <div class="six columns">
                 <h2>Split!</h2>
                 <p>Split your coins equally into two addresses.</p>
-                <label for="SplitBeneficiary1">Beneficiary 1:</label><input id="SplitBeneficiary1" type="text" />
-                <label for="SplitBeneficiary2">Beneficiary 2:</label><input id="SplitBeneficiary2" type="text" />
-                <label for="SplitAmount">Ether:</label><input id="SplitAmount" type="text" />
+                <label for="SplitBeneficiary1">Beneficiary 1:</label><input id="SplitBeneficiary1" type="text" value="0x8e40dd200b0faa0d6f50220ab9a295c1773dd1ca" />
+                <label for="SplitBeneficiary2">Beneficiary 2:</label><input id="SplitBeneficiary2" type="text" value="0xc99932d93843b8fe108d7bbb58ececbd184a1603" />
+                <label for="SplitAmount">Ether:</label><input id="SplitAmount" type="text" value="3" />
                 <button onclick="splitter.split()">Send</button>
             </div>
             <div class="six columns">
                 <section id="Withdraw">
                     <h2>Withdraw</h2>
                     <p>Withdraw using the following button.</p>
-                    <label for="WithdrawBalance">Balance:</label><input id="WithdrawBalance" type="text" disabled />
+                    <p><strong>My Balance: <span id="WithdrawBalance">0</span></strong></p>
                     <button onclick="splitter.withdraw()">Withdraw</button>
                 </section>
             </div>
@@ -42,7 +43,7 @@
                 <tbody>
                 <tr>
                     <td>Contract balance:</td>
-                    <td id="ContractBalance"></td>
+                    <td id="ContractBalance">0</td>
                 </tr>
                 </tbody>
             </table>

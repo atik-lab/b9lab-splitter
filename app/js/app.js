@@ -1,117 +1,178 @@
-require("file-loader?name=./web3.js!./web3.js");
 require("file-loader?name=../index.html!../index.html");
 require("file-loader?name=../css/normalize.css!../css/normalize.css");
 require("file-loader?name=../css/skeleton.css!../css/skeleton.css");
+require("file-loader?name=../css/style.css!../css/style.css");
+let Web3 = require("web3");
 
 // Prepare splitter instance
-const splitterAddress = '0xA1ea75f21bb28B23d686d36A7231A6c8EE1D9F49';
 const splitterJson = require("../../build/contracts/Splitter.json");
-const splitterContractFactory = web3.eth.contract(splitterJson.abi);
-const splitterInstance = splitterContractFactory.at(splitterAddress);
+let splitterAddress, splitterInstance;
+let web3, accounts, defaultAccount;
 
-window.onload = async function () {
-    if (typeof web3 !== 'undefined') {
-        // Don't lose an existing provider, like Mist or Metamask
+window.onload = async function() {
+    if (window.ethereum) {
+        web3 = new Web3(ethereum);
+        try {
+            await ethereum.enable();
+            accounts = await web3.eth.getAccounts();
+        } catch (error) {
+            messageError('User denied account access...');
+        }
+    } else if (window.web3) { // Legacy dapp browsers...
         web3 = new Web3(web3.currentProvider);
-        await ethereum.enable(); // Introduced in last versions of Metamask.
-    } else {
-        // set the provider you want from Web3.providers
-        web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+        accounts = web3.eth.accounts;
+    } else { // Non-dapp browsers...
+        messageError('Non-Ethereum browser detected. Download: https://metamask.io/');
     }
+    defaultAccount = accounts[0];
+    console.log("Web3 v" + web3.version);
+    // Prepare contract
+    // Get the contract address based on the json
+    let networks = Object.keys(splitterJson["networks"]);
+    let lastNetwork = splitterJson["networks"][networks[networks.length-1]];
+    splitterAddress = lastNetwork["address"];
+    splitterInstance = new web3.eth.Contract(splitterJson.abi, splitterAddress);
+    // Initialize
     splitter.init();
 };
 
 module.exports = {
-    init: function () {
-        // update my balance and balance table every second
-        setInterval(function() {
-            splitter.updateContractBalance();
-            splitter.updateMyBalance();
-            splitter.updateBalanceTable();
-        }, 5000);
-        splitter.updateContractBalance();
-        splitter.updateMyBalance();
-        splitter.updateBalanceTable();
+    init: function() {
+        splitter.createBalanceTable();
+        splitter.startWatcher();
     },
-    // Update in the frontend the balance of the contract
-    updateContractBalance: function () {
-        web3.eth.getBalance(splitterAddress, function (error, balance) {
-            if (error) {
-                console.error(error);
-            } else {
-                document.getElementById("ContractBalance").innerText = web3.fromWei(balance, "ether");
-            }
-        });
-    },
-    // Show to the ui all the beneficiaries and their balances
-    updateMyBalance: function () {
-        splitterInstance.getMyBalance.call(function (error, result) {
-            if (error) {
-                console.log(error);
-            } else {
-                if (typeof result === 'undefined') {
-                    result = 0;
-                }
-                document.getElementById("WithdrawBalance").value = web3.fromWei(result.toString());
-            }
-        });
-    },
-    // Show to the user his balance available to withdraw
-    updateBalanceTable: function () {
-        document.getElementById("BalanceTableBody").innerHTML = '';
-        splitterInstance.getAddressLookupCount.call(function (error, addressCount) {
-            if (error) {
-                console.log(error);
-            } else {
-                for (let i = 0; i < addressCount; i++) {
-                    splitterInstance.addressLookup.call(i, function (error, address) {
-                        if (error) {
-                            console.log(error);
-                        } else {
-                            splitterInstance.beneficiaries.call(address, function (error, result) {
-                                if (error) {
-                                    console.log(error);
-                                } else {
-                                    result = '<tr><td>' + address + '</td><td>' + web3.fromWei(result.toString()) + '</td></tr>';
-                                    document.getElementById("BalanceTableBody").innerHTML += result;
-                                }
-                            });
-                        }
-                    });
-                }
-            }
-        });
-    },
-    split: function () {
+    split: function() {
         let amount = document.getElementById("SplitAmount").value;
         let beneficiary1 = document.getElementById("SplitBeneficiary1").value;
         let beneficiary2 = document.getElementById("SplitBeneficiary2").value;
-        splitterInstance.split(beneficiary1, beneficiary2, {
-            from: splitter.getMyAddress(),
-            value: web3.toWei(amount, "ether")
-        }, function (error, tx) {
-            if (error) {
-                alert("Error! Check console");
-                console.error(error);
-            } else {
-                alert("Split successful");
-            }
-        });
+        splitterInstance.methods.split(beneficiary1, beneficiary2).send({from: defaultAccount, value: web3.utils.toWei(amount, "ether")})
+            .on('transactionHash', (transactionHash) => {
+                messageSuccess("Transaction " + transactionHash);
+            })
+            .on('confirmation', (confirmationNumber, receipt) => {
+                if (receipt.status === true && receipt.logs.length === 1) {
+                    messageSuccess("Split successful");
+                } else {
+                    messageError("Transaction status: failed");
+                }
+            })
+            .on('error', error => {
+                messageError(error);
+            });
     },
-    withdraw: function () {
-        splitterInstance.withdraw({
-            from: splitter.getMyAddress()
-        }, function (error, tx) {
-            if (error) {
-                alert("Error! Check console");
-                console.error(error);
-            } else {
-                alert("Withdraw successful");
-            }
-        });
+    withdraw: function() {
+        splitterInstance.methods.withdraw().send({from: defaultAccount})
+            .on('transactionHash', (transactionHash) => {
+                messageSuccess("Transaction " + transactionHash);
+            })
+            .on('confirmation', (confirmationNumber, receipt) => {
+                if (receipt.status === true && receipt.logs.length === 1) {
+                    messageSuccess("Withdraw successful");
+                } else {
+                    messageError("Transaction status: failed");
+                }
+            })
+            .on('error', error => {
+                messageError("Error. Not enough balance? " + error);
+            });
     },
-    getMyAddress: function ()
-    {
-        return web3.eth.accounts[0];
+    // Show to the user his balance available to withdraw
+    createBalanceTable: function() {
+        splitterInstance.getPastEvents('allEvents', {fromBlock: 0, toBlock: "latest"})
+            .then(events => {
+                for (let i = 0; i < events.length; i += 1) {
+                    splitter.parseEvent(events[i]);
+                }
+            })
+            .catch(error => {
+                messageError("Error fetching events: " + error);
+            })
+    },
+    // Watcher to update gui
+    startWatcher: function() {
+        splitterInstance.events.allEvents()
+            .on('data', event => {
+                splitter.parseEvent(event);
+            })
+            .on('error', error => {
+                messageError("Error on event: " + error);
+            });
+    },
+    // Update UI with the event
+    parseEvent: function(event) {
+        switch (event.event) {
+            case 'LogEtherPaid':
+                let amount1 = web3.utils.toBN(event.returnValues['amount1'].toString()); // BN !== BigNumber
+                let amount2 = web3.utils.toBN(event.returnValues['amount2'].toString()); // BN !== BigNumber
+                splitter.addBalanceInTable(event.returnValues['beneficiary1'], amount1);
+                splitter.addBalanceInTable(event.returnValues['beneficiary2'], amount2);
+                splitter.addToDOMElement('ContractBalance', amount1.add(amount2));
+                if (event.returnValues['beneficiary1'] === defaultAccount) {
+                    splitter.addToDOMElement('WithdrawBalance', amount1);
+                }
+                if (event.returnValues['beneficiary2'] === defaultAccount) {
+                    splitter.addToDOMElement('WithdrawBalance', amount2);
+                }
+                break;
+            case 'LogEtherWithdraw':
+                let amount = web3.utils.toBN(event.returnValues['amount'].toString()); // BN !== BigNumber
+                splitter.addBalanceInTable(event.returnValues['beneficiary'], amount.neg());
+                splitter.addToDOMElement('ContractBalance', amount.neg());
+                if (event.returnValues['beneficiary'] === defaultAccount) {
+                    splitter.addToDOMElement('WithdrawBalance', amount.neg());
+                }
+                break;
+            default:
+                console.log(event);
+        }
+    },
+    // Add balance in frontend
+    addBalanceInTable: function(address, amount) {
+        if (document.getElementById(address) !== null) {
+            splitter.addToDOMElement(address + '_value', amount);
+        } else {
+            let newRow = '<tr><td id="' + address + '">' + address + '</td><td id="' + address + '_value">' + web3.utils.fromWei(amount.toString()) + '</td></tr>';
+            document.getElementById("BalanceTableBody").innerHTML += newRow;
+        }
+    },
+    // Change contract balance UI
+    addToDOMElement: function(elementId, amount) {
+        let oldAmount = web3.utils.toBN(web3.utils.toWei(document.getElementById(elementId).innerText));
+        let newBalance = oldAmount.add(amount);
+        document.getElementById(elementId).innerText = web3.utils.fromWei(newBalance.toString())
     }
 };
+
+/*
+ * Messages and utils
+ */
+
+let messageIdCounter = 0;
+
+function messageSuccess(message) {
+    let messageBox = document.getElementById("MessageBox");
+    let messageId = messageIdCounter;
+    let div = document.createElement('div');
+    div.id = 'message-id-' + messageId;
+    div.className = 'message-success';
+    div.innerText = message;
+    messageBox.insertBefore(div, messageBox.firstChild);
+    messageIdCounter++;
+    setTimeout(function(){
+        document.getElementById(div.id).remove();
+    }, 1000*5); // Every second checkStatus
+}
+
+function messageError(message) {
+    let messageBox = document.getElementById("MessageBox");
+    let messageId = messageIdCounter;
+    let div = document.createElement('div');
+    div.id = 'message-id-' + messageId;
+    div.className = 'message-error';
+    div.innerText = message;
+    messageBox.insertBefore(div, messageBox.firstChild);
+    messageIdCounter++;
+    setTimeout(function(){
+        document.getElementById(div.id).remove();
+    }, 1000*5); // Every second checkStatus
+}

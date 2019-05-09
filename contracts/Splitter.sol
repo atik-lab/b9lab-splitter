@@ -7,9 +7,8 @@ contract Splitter is Pausable {
     using SafeMath for uint;
 
     mapping(address => uint) public beneficiaries;
-    address[] public addressLookup;
 
-    event LogEtherPaid(address indexed beneficiary1, address indexed beneficiary2, uint amount);
+    event LogEtherPaid(address indexed whodunnit, address indexed beneficiary1, uint amount1, address indexed beneficiary2, uint amount2);
     event LogEtherWithdraw(address indexed beneficiary, uint amount);
 
     /**
@@ -24,27 +23,24 @@ contract Splitter is Pausable {
      * half of it goes to Bob and the other half to Carol.
      */
     function split(address _beneficiary1, address _beneficiary2) external payable whenNotPaused {
-        require(msg.value%2 == 0, "It's not allowed to send an odd value.");
         require(_beneficiary1 != _beneficiary2, "Beneficiaries must be different");
         require(_beneficiary1 != address(0), "Beneficiary1 address is malformed");
         require(_beneficiary2 != address(0), "Beneficiary2 address is malformed");
         require(msg.value > 0, "You must send something to split");
-        uint _addedAmount = msg.value/uint(2);
-        emit LogEtherPaid(_beneficiary1, _beneficiary2, msg.value);
-        beneficiaries[_beneficiary1] = beneficiaries[_beneficiary1].add(_addedAmount);
-        beneficiaries[_beneficiary2] = beneficiaries[_beneficiary2].add(_addedAmount);
-        addressLookup.push(_beneficiary1);
-        addressLookup.push(_beneficiary2);
+        uint _addedAmount2 = msg.value/uint(2);
+        uint _addedAmount1 = _addedAmount2.add(msg.value%2);
+        emit LogEtherPaid(msg.sender, _beneficiary1, _addedAmount1, _beneficiary2, _addedAmount2);
+        beneficiaries[_beneficiary1] = beneficiaries[_beneficiary1].add(_addedAmount1);
+        beneficiaries[_beneficiary2] = beneficiaries[_beneficiary2].add(_addedAmount2);
     }
 
     /**
      * Beneficiaries can withdraw, all at once for the sake of simplicity
      */
     function withdraw() public whenNotPaused {
-        uint _quantityToWithdraw;
         uint _toWithdraw = beneficiaries[msg.sender];
         require(_toWithdraw > 0, "Nothing to withdraw");
-        emit LogEtherWithdraw(msg.sender, _quantityToWithdraw);
+        emit LogEtherWithdraw(msg.sender, beneficiaries[msg.sender]);
         beneficiaries[msg.sender] = 0;
         msg.sender.transfer(_toWithdraw);
     }
@@ -54,12 +50,5 @@ contract Splitter is Pausable {
      */
     function getMyBalance() public view returns(uint) {
         return beneficiaries[msg.sender];
-    }
-
-    /**
-     * Returns the number of accounts that have/had money to withdraw.
-     */
-    function getAddressLookupCount() public view returns(uint) {
-        return addressLookup.length;
     }
 }

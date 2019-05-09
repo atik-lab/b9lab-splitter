@@ -13,21 +13,13 @@ You will create a smart contract named Splitter whereby:
 * Alice can use the Web page to split her ether.
 * Add unit tests
 
-### Setup
-
-app.js inside web3/js contains the contract address that might need to be modified.
-
-Ether can be send only by Alice with pay(), and then bob and carol can withdraw their half calling withdraw().
-
-By using the following mnemonic with ganache the address of the contract will be already the same as in app.js. 
-
-```
-ganache-cli --accounts=3 --host=0.0.0.0 --m "dream feel bracket hill river gate farm naive paddle script destroy word"
-```
-
 ## Useful commands
 
 ```
-// get contract abi and bin
-solc --combined-json abi,bin ../contracts/Splitter.sol | jq
+truffle test
+// By using the following mnemonic with ganache the address of the contract will be already the same as in app.js. 
+ganache-cli --accounts=3 --host=0.0.0.0 --m "dream feel bracket hill river gate farm naive paddle script destroy word"
+truffle migrate
+./node_modules/.bin/webpack-cli --mode development
+php -S 0.0.0.0:8000 -t ./build/app
 ```
