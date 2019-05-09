@@ -29,9 +29,9 @@ contract Splitter is Pausable {
         require(msg.value > 0, "You must send something to split");
         uint _addedAmount2 = msg.value/uint(2);
         uint _addedAmount1 = _addedAmount2.add(msg.value%2);
-        emit LogEtherPaid(msg.sender, _beneficiary1, _addedAmount1, _beneficiary2, _addedAmount2);
         beneficiaries[_beneficiary1] = beneficiaries[_beneficiary1].add(_addedAmount1);
         beneficiaries[_beneficiary2] = beneficiaries[_beneficiary2].add(_addedAmount2);
+        emit LogEtherPaid(msg.sender, _beneficiary1, _addedAmount1, _beneficiary2, _addedAmount2);
     }
 
     /**
@@ -40,8 +40,8 @@ contract Splitter is Pausable {
     function withdraw() public whenNotPaused {
         uint _toWithdraw = beneficiaries[msg.sender];
         require(_toWithdraw > 0, "Nothing to withdraw");
-        emit LogEtherWithdraw(msg.sender, beneficiaries[msg.sender]);
         beneficiaries[msg.sender] = 0;
+        emit LogEtherWithdraw(msg.sender, _toWithdraw);
         msg.sender.transfer(_toWithdraw);
     }
 
