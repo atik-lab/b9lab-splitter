@@ -9,38 +9,29 @@ contract('Main test', accounts => {
     const halfQuantity = web3.utils.toWei('0.05', 'ether');
     const halfQuantityBN = web3.utils.toBN(halfQuantity);
 
-    describe("Check if the setup is correct to pass the tests", function() {
-        let instance;
-
-        beforeEach("Deploy and prepare", async function() {
-            instance = await Splitter.new(bob, carol, {from: alice});
-        });
-
-        it("The accounts have enough balance", async function() {
-            let aliceBalanceBN = web3.utils.toBN(await web3.eth.getBalance(alice));
-            let minimum = web3.utils.toBN(web3.utils.toWei('1', 'ether'));
-            assert.isTrue(aliceBalanceBN.gte(minimum));
-        });
-
-        it("The contract starts with 0 balance", async function() {
-            assert.strictEqual(await web3.eth.getBalance(instance.address), '0');
-        });
+    let instance;
+    beforeEach("deploy and prepare", async function() {
+        instance = await Splitter.new(bob, carol, {from: alice});
     });
 
-    describe("Splitting ETH", function() {
-        let instance;
+    before("running check if the setup is correct to pass the tests", async function() {
 
-        beforeEach("Deploy and prepare", async function() {
-            instance = await Splitter.new(bob, carol, {from: alice});
-        });
+        let aliceBalanceBN = web3.utils.toBN(await web3.eth.getBalance(alice));
+        let minimum = web3.utils.toBN(web3.utils.toWei('1', 'ether'));
+        instance = await Splitter.new(bob, carol, {from: alice});
+        assert.isTrue(aliceBalanceBN.gte(minimum));
+        assert.strictEqual(await web3.eth.getBalance(instance.address), '0');
+    });
 
-        it("Alice cannot send ETH to the contract", async function() {
+    describe("splitting ETH", function() {
+
+        it("should not let Alice send Eth to the contract", async function() {
             return await expectedExceptionPromise(function() {
                 return instance.sendTransaction({from: alice, value: quantity});
             });
         });
 
-        it("Alice splits ETH", async function() {
+        it("should let alice split her ETH", async function() {
             let txObj = await instance.split(bob, carol, {from: alice, value: quantity});
             // Check event
             assert.strictEqual(txObj.logs.length, 1, "Only one event is expected");
@@ -58,7 +49,7 @@ contract('Main test', accounts => {
             assert.strictEqual(toWithdraw2.toString(), halfQuantityBN.toString(), "toWithdraw1 should had been increased correctly.");
         });
 
-        it("Cannot send ETH while paused", async function() {
+        it("should not send ETH while paused", async function() {
             let txObj = await instance.pause({from: alice});
             assert.strictEqual(txObj.logs.length, 1, "Only one event is expected");
             await expectedExceptionPromise(function() {
@@ -67,15 +58,13 @@ contract('Main test', accounts => {
         });
     });
 
-    describe("Withdrawing ETH from the contract", function() {
-        let instance;
+    describe("withdrawing ETH from the contract", function() {
 
-        beforeEach("Deploy and prepare", async function() {
-            instance = await Splitter.new(bob, carol, {from: alice});
+        beforeEach("deploy and prepare", async function() {
             await instance.split(bob, carol, {from: alice, value: quantity});
         });
 
-        it("Bob can withdraw", async function() {
+        it("should let bob withdraw his ETH", async function() {
             let bobInitialBalanceBN = web3.utils.toBN(await web3.eth.getBalance(bob));
             let txObj = await instance.withdraw({from: bob});
             // Check the event

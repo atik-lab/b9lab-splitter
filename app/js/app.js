@@ -2,16 +2,15 @@ require("file-loader?name=../index.html!../index.html");
 require("file-loader?name=../css/normalize.css!../css/normalize.css");
 require("file-loader?name=../css/skeleton.css!../css/skeleton.css");
 require("file-loader?name=../css/style.css!../css/style.css");
-let Web3 = require("web3");
-
-// Prepare splitter instance
+const Web3 = require("web3");
 const splitterJson = require("../../build/contracts/Splitter.json");
-let splitterAddress, splitterInstance;
+
+let splitterInstance;
 let web3, accounts, defaultAccount;
 
 window.onload = async function() {
     if (window.ethereum) {
-        web3 = new Web3(ethereum);
+        web3 = new Web3(window.ethereum);
         try {
             await ethereum.enable();
             accounts = await web3.eth.getAccounts();
@@ -20,18 +19,18 @@ window.onload = async function() {
         }
     } else if (window.web3) { // Legacy dapp browsers...
         web3 = new Web3(web3.currentProvider);
-        accounts = web3.eth.accounts;
+        accounts = web3.eth.getAccounts().then(e => accounts = e);
     } else { // Non-dapp browsers...
+        web3 = new Web3(new Web3.providers.HttpProvider("http://127.0.0.1:8545"));
+        accounts = web3.eth.getAccounts().then(e => accounts = e);
         messageError('Non-Ethereum browser detected. Download: https://metamask.io/');
     }
     defaultAccount = accounts[0];
     console.log("Web3 v" + web3.version);
     // Prepare contract
-    // Get the contract address based on the json
-    let networks = Object.keys(splitterJson["networks"]);
-    let lastNetwork = splitterJson["networks"][networks[networks.length-1]];
-    splitterAddress = lastNetwork["address"];
-    splitterInstance = new web3.eth.Contract(splitterJson.abi, splitterAddress);
+    const networkId = await web3.eth.net.getId();
+    const deployedNetwork = splitterJson.networks[networkId];
+    splitterInstance = new web3.eth.Contract(splitterJson.abi, deployedNetwork.address);
     // Initialize
     splitter.init();
 };
